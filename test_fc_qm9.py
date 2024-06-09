@@ -73,7 +73,6 @@ def simple_keras_model():
     model = keras.Sequential()
     model.add(keras.layers.Lambda(lambda x: keras.backend.sum(x, axis=1,keepdims=False)))
     model.add(keras.layers.Dense(16, use_bias=True))
-    #model.compile(loss='mean_squared_error', optimizer = 'rmsprop', metrics=['mae', r2_keras])
     model.compile(loss='mean_squared_error', optimizer = optimizer, metrics=['mae', r2_keras])
     return model
 
@@ -92,14 +91,14 @@ history = model.fit(xs_array, norm_ys, epochs=100, batch_size=32)
 
 print(model.summary())
 
-#fig_acc = plt.figure(figsize=(10,10))
-#plt.plot(history.history['mae'])
-#plt.title('model MAE')
-#plt.ylabel('MAE')
-#plt.xlabel('epoch')
-#plt.legend(['train'], loc='upper left')
-#plt.show()
-
+fig_acc = plt.figure(figsize=(10,10))
+plt.plot(history.history['mae'])
+plt.title('model MAE')
+plt.ylabel('MAE')
+plt.xlabel('epoch')
+plt.legend(['train'], loc='upper left')
+plt.show()
+fig_acc.savefig('fc_qm9_mae.png', dpi=fig_acc.dpi)
 
 xs = [(convert_record(d)[0][0]) for d in valid_set]
 xs_array = np.array(xs)

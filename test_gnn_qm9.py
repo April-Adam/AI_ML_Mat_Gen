@@ -157,3 +157,31 @@ batch_size = 32
 train_generator = DataGenerator(nodes, edges, norm_ys, batch_size)
 
 history = model.fit_generator(generator=train_generator, epochs=100)
+
+fig_acc = plt.figure(figsize=(10,10))
+plt.plot(history.history['mae'])
+plt.title('model MAE')
+plt.ylabel('MAE')
+plt.xlabel('epoch')
+plt.legend(['train'], loc='upper left')
+plt.show()
+fig_acc.savefig('gnn_qm9_mae.png', dpi=fig_acc.dpi)
+
+
+nodes = [(convert_record(d)[0][0]) for d in valid_set]
+nodes = [np.repeat(d[np.newaxis, ...], d.shape[0], axis=0) for d in nodes]
+print((np.array(nodes)).shape)
+coords = [(convert_record(d)[0][1]) for d in valid_set]
+edges = [coordsToDistance(d) for d in coords]
+print((np.array(edges)).shape)
+
+ys = [convert_record(d)[1] for d in valid_set]
+norm_ys = [transform_label(d) for d in ys]
+norm_ys = np.asarray(norm_ys)
+print(norm_ys.shape)
+
+features = np.zeros((len(nodes), graph_feature_len))
+print(features.shape)
+
+accuracy = model.evaluate([np.array(nodes), np.array(edges), features], norm_ys)
+print(accuracy)
