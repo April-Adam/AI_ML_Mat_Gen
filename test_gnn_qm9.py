@@ -158,6 +158,15 @@ train_generator = DataGenerator(nodes, edges, norm_ys, batch_size)
 
 history = model.fit_generator(generator=train_generator, epochs=100)
 
+model.save('gnn_qm9.h5')
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+tflite_model = converter.convert()
+
+# Save the model
+with open('gnn_qm9_model.tflite', 'wb') as f:
+  f.write(tflite_model)
+print(model.summary())
+
 fig_acc = plt.figure(figsize=(10,10))
 plt.plot(history.history['mae'])
 plt.title('model MAE')

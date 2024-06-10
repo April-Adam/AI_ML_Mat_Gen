@@ -42,7 +42,48 @@ To desgin AI Neural network to prdicte QM9 material properites (indicated by lab
 ![image info](./docs/Pred.png)
 
 ## Neural Network 
-### convolution neural network 
+### Convolution Neural Network 
+This network consists of a fully connected layer. Atom information is encoded using one-hot encoding mechnaism. For materials in QM9, there are maximum 32 atoms of 16 different elements. After encoding, the input is in format of 32x16.
+Notes: atom corrdination information is not used.
+
+![image info](./docs/fc_net.png)
+
+The model construction is done as following:
+```
+optimizer = keras.optimizers.RMSprop(learning_rate=0.0001)
+def simple_keras_model():
+    model = keras.Sequential()
+    model.add(keras.layers.Lambda(lambda x: keras.backend.sum(x, axis=1,keepdims=False)))
+    model.add(keras.layers.Dense(16, use_bias=True))
+    model.compile(loss='mean_squared_error', optimizer = optimizer, metrics=['mae', r2_keras])
+    return model
+```
+
+![image info](./docs/fc_net.png)
+
+Training:
+
+MAE is measured on 100 epochs
+
+![image info](./docs/fc_qm9_mae.png)
 
 
-### graph neural network 
+```
+Epoch 100/100
+157/157 [==============================] - 0s 687us/step - loss: 0.1879 - mae: 0.1002 - r2_keras: 0.8083
+```
+[7.412908554077148, 0.10898412764072418, 0.6476361155509949]
+
+### Graph Neural Network 
+
+![image info](./docs/gnn_net.png)
+
+epoch 100/100
+157/157 [==============================] - 1s 5ms/step - loss: 0.1255 - mae: 0.1145 - r2_keras: 0.8714
+
+
+[0.12728539109230042, 0.11673972755670547, 0.7171451449394226]
+
+
+
+![image info](./docs/gnn_qm9_mae.png)

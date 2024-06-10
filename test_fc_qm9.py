@@ -88,7 +88,13 @@ print(xs_array.shape)
 print(norm_ys.shape)
 
 history = model.fit(xs_array, norm_ys, epochs=100, batch_size=32)
+model.save('fc_qm9.h5')
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+tflite_model = converter.convert()
 
+# Save the model
+with open('fc_qm9_model.tflite', 'wb') as f:
+  f.write(tflite_model)
 print(model.summary())
 
 fig_acc = plt.figure(figsize=(10,10))
