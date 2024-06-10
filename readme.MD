@@ -58,6 +58,7 @@ def simple_keras_model():
     return model
 ```
 The visualization of FC network structure:
+
 ![image info](./docs/fc_net.png)
 
 Training on 100 epochs:
