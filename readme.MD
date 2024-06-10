@@ -1,4 +1,4 @@
-Readme v 1.0
+Readme v 1.0 @April Zheng & Adam Zheng 
 
 # Graph neural network based application on  Quantum Chemistry
 Inspired from https://arxiv.org/pdf/1704.01212
@@ -46,7 +46,6 @@ To desgin AI Neural network to prdicte QM9 material properites (indicated by lab
 This network consists of a fully connected layer. Atom information is encoded using one-hot encoding mechnaism. For materials in QM9, there are maximum 32 atoms of 16 different elements. After encoding, the input is in format of 32x16.
 Notes: atom corrdination information is not used.
 
-![image info](./docs/fc_net.png)
 
 The model construction is done as following:
 ```
@@ -58,32 +57,94 @@ def simple_keras_model():
     model.compile(loss='mean_squared_error', optimizer = optimizer, metrics=['mae', r2_keras])
     return model
 ```
-
+The visualization of FC network structure:
 ![image info](./docs/fc_net.png)
 
-Training:
+Training on 100 epochs:
 
-MAE is measured on 100 epochs
+The MAE(mean absolute eror) curve is shown as following: 
 
 ![image info](./docs/fc_qm9_mae.png)
 
+It can be seen at about 50 epoch, the MAE 
+is converged to 0.1.
+
+After 100 epoch, the loss/mae/r2 values are as following:
 
 ```
 Epoch 100/100
 157/157 [==============================] - 0s 687us/step - loss: 0.1879 - mae: 0.1002 - r2_keras: 0.8083
 ```
+r2_keras indicates how close the fitted regression line is to ground-truth data. The highest score possible is 1.0. It indicates that the predictors perfectly accounts for variation in the target. A score of 0.0 indicates that the predictors do not account for variation in the target.
+
+The following result(loss/mae/r2) is caluldated on validation dataset which is not in training dataset.
+
+```
 [7.412908554077148, 0.10898412764072418, 0.6476361155509949]
+```
 
 ### Graph Neural Network 
+https://arxiv.org/pdf/1609.02907
+Graph Neural Network takes input as graph with nodes and edges. From QM9 dataset, atom coordinates are used to calcualte distance between atom which then construct as the edge between nodes(atoms)
+
+GNN is performing information aggregation (from all neighbor nodes and edges to current node), then update current node information. 
+
+![image info](./docs/gnn.png)
+
+```
+def simple_gnn_model():
+    # nodes: [N, N, node_feature_len]
+    # edges: [N, N]
+    nodes = keras.Input((32, 32, node_feature_len))
+    edges = keras.Input((32, 32))
+    features = keras.Input((graph_feature_len))
+
+    # out: [N, N, msg_feature_len]
+    out = Conv_block(nodes, msg_feature_len, 'relu')
+    # out: = [N, N, msg_feature_len] . [N, N, 1]
+
+    #out = keras.layers.Lambda(lambda x: x[0] * K.expand_dims(x[1], axis=-1))([out, edges])
+    x = K.expand_dims(edges, axis=-1)
+    x = K.repeat_elements(x, msg_feature_len, axis=-1)
+    out = keras.layers.Multiply()([out, x])
+    # out: [N, msg_feature_len]
+    out = keras.layers.Lambda(lambda x: K.sum(x, axis=2,keepdims=False))(out)
+    # new_nodes: [N, node_feature_len]
+    new_nodes = Conv_block(out, node_feature_len, 'relu')
+    # out: [node_feature_len]
+    out = keras.layers.Lambda(lambda x: K.sum(x, axis=1, keepdims=False))(new_nodes)
+    # out: [graph_feature_len]
+    new_features = keras.layers.Dense(graph_feature_len, use_bias=True)(out)
+    new_features = keras.layers.Lambda(lambda x: x[0] + x[1])([new_features, features])
+    pred =  keras.layers.Dense(16, use_bias=True)(new_features)
+
+    model = keras.Model(inputs = [nodes, edges, features], outputs = [pred])
+    return model
+```
+The visualization of GNN network structure:
+
 
 ![image info](./docs/gnn_net.png)
 
-epoch 100/100
-157/157 [==============================] - 1s 5ms/step - loss: 0.1255 - mae: 0.1145 - r2_keras: 0.8714
-
-
-[0.12728539109230042, 0.11673972755670547, 0.7171451449394226]
-
-
+The MAE(mean absolute eror) curve is shown as following: 
 
 ![image info](./docs/gnn_qm9_mae.png)
+
+The MAE is converged to 0.1 around 20 epoch
+
+
+After 100 epoch, the loss/mae/r2 values are as following:
+```
+epoch 100/100
+157/157 [==============================] - 1s 5ms/step - loss: 0.1255 - mae: 0.1145 - r2_keras: 0.8714
+```
+The following result(loss/mae/r2) is caluldated on validation dataset which is not in training dataset.
+```
+[0.12728539109230042, 0.11673972755670547, 0.7171451449394226]
+```
+
+
+
+
+
+## comparsion 
