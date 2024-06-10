@@ -143,8 +143,19 @@ The following result(loss/mae/r2) is caluldated on validation dataset which is n
 [0.12728539109230042, 0.11673972755670547, 0.7171451449394226]
 ```
 
-
-
-
-
 ## comparsion 
+
+The training result shows clear advantage of GNN vs traditional CNN(FC) networks. On both training and validation, GNN has better r2 score and smaller loss, mae is closer.
+
+|training result | loss|mae|r2|
+|-----------|------|-----|----|
+|FC | 0.1879|0.1002|0.8083|
+|GNN | 0.1255|0.11|0.8714|
+
+
+|validation result | loss|mae|r2|
+|-----------|------|-----|----|
+|FC | 7.4129|0.1089|0.6476|
+|GNN | 0.1272|0.1167|0.7171|
+
+Also GNN training is converged much faster.
