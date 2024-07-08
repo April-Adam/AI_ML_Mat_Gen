@@ -88,7 +88,7 @@ The following result (loss/MAE/r2) is calculated on the validation dataset (whic
 
 ### 2. Graph Neural Network 
 https://arxiv.org/pdf/1609.02907 <br>
-A Graph Neural Network (GNN) takes input and parses it into a graph with nodes and edges. From the QM9 dataset, the atom coordinates are used to calculate distance between pairs of atoms, which is then used to construct the edges between nodes (i.e. atoms).
+A Graph Neural Network (GNN) takes input as a graph with nodes and edges. From the QM9 dataset, the atom coordinates are used to calculate distance between pairs of atoms, which is then used to construct the edges between nodes (i.e. atoms).
 
 GNNs perform information aggregation (from all neighbor nodes and edges to current node), then update current node information. 
 
