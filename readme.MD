@@ -42,13 +42,13 @@ moment µ (Debye), and the norm of static polarizability α (Bohr3)."
 ![image info](./docs/Pred.png)
 
 ## Requirements
-This code only works on TensorFlow version 2.15.1 and lower. If you are using TensorFlow 2.16.0 and above, you can downgrade TensorFlow using `pip uninstall tensorflow` and `pip install tensorflow==<version>`, where `<version>` is any TensorFlow version below 2.16.0.
+This software currently only works on TensorFlow version 2.15.1 and lower. If you are using TensorFlow 2.16.0 and above, you can downgrade TensorFlow using `pip uninstall tensorflow` and `pip install tensorflow==<version>`, where `<version>` is any TensorFlow version below 2.16.0.
 
 Furthermore, only certain versions of Python can be used to install certain versions of TensorFlow. Visit [this link](https://www.tensorflow.org/install/source#tested_build_configurations) to see what versions of Python are required to use what versions of TensorFlow.
 
 ## Neural Network 
 ### 1. Convolution Neural Network 
-This network consists of a fully connected layer. Atom information is encoded using one-hot encoding mechanism. In the QM9 dataset, each molecule has maximum 32 atoms, each atom being one of 16 different elements. After encoding, the input is in format of 32x16. <br>
+This Convolutional Neural Network (CNN) consists of a fully connected layer. Atom information is encoded using one-hot encoding mechanism. In the QM9 dataset, each molecule has maximum 32 atoms, each atom being one of 16 different elements. After encoding, the input is in format of 32x16. <br>
 Note: atom coordinate information is not used in this model.
 
 
@@ -62,6 +62,7 @@ def simple_keras_model():
     model.compile(loss='mean_squared_error', optimizer = optimizer, metrics=['mae', r2_keras])
     return model
 ```
+
 The visualization of FC network structure:
 
 ![image info](./docs/fc_net.png)
@@ -149,15 +150,15 @@ The following result (loss/MAE/r2) is calculated on the validation dataset (whic
 
 The results from both the training and validation phases shows the clear advantage of GNN vs traditional CNN (FC) networks. On both training and validation, GNN has a better r2 score and smaller loss. Compared to these two metrics, the MAE of the two networks is closer.
 
-|training result | loss|mae|r2|
+|Training result|loss|MAE|r2|
 |-----------|------|-----|----|
-|FC | 0.1879|0.1002|0.8083|
-|GNN | 0.1255|0.11|0.8714|
+|CNN (FC) |0.1879|0.1002|0.8083|
+|GNN|0.1255|0.1145|0.8714|
 
 
-|validation result | loss|mae|r2|
+|Validation result|loss|MAE|r2|
 |-----------|------|-----|----|
-|FC | 7.4129|0.1089|0.6476|
-|GNN | 0.1272|0.1167|0.7171|
+|CNN (FC) |7.4129|0.1089|0.6476|
+|GNN|0.1272|0.1167|0.7171|
 
 Furthermore, the MAE of the GNN converged much faster (converging at 0.1 at epoch 20 for the GNN compared to epoch 50 for the traditional CNN (FC) networks) during training.
