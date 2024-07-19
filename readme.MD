@@ -97,32 +97,47 @@ GNNs perform information aggregation (from all neighbor nodes and edges to curre
 
 ```python
 def simple_gnn_model():
-    # nodes: [N, N, node_feature_len]
-    # edges: [N, N]
-    nodes = keras.Input((32, 32, node_feature_len))
-    edges = keras.Input((32, 32))
-    features = keras.Input((graph_feature_len))
+    nodes = keras.Input(shape=(32, 32, node_feature_len)) # nodes: shape (32, 32, 16)
+    edges = keras.Input(shape=(32, 32)) # edges: shape (32, 32)
+    features = keras.Input(shape=(graph_feature_len,))
 
-    # out: [N, N, msg_feature_len]
-    out = Conv_block(nodes, msg_feature_len, 'relu')
-    # out: = [N, N, msg_feature_len] . [N, N, 1]
+    # input 1: nodes
+    out = conv_block(nodes, msg_feature_len, 'relu')
 
-    #out = keras.layers.Lambda(lambda x: x[0] * K.expand_dims(x[1], axis=-1))([out, edges])
-    x = K.expand_dims(edges, axis=-1)
-    x = K.repeat_elements(x, msg_feature_len, axis=-1)
+    # input 2: edges
+    # purpose of the below code is to reshape edges for matrix multiplication later on
+    x = tf.expand_dims(edges, axis=-1) # shape (None, 32, 32, 1)
+    # duplicate each inverse square distance to form 16 length tensors per atom
+    x = K.repeat_elements(x, msg_feature_len, axis=-1) # shape (None, 32, 32, 16)
+
+    # scale the outputs of the conv block inversely to the distances between atoms
+    # this means that the farther 2 atoms are, the less their connection affects each other
     out = keras.layers.Multiply()([out, x])
-    # out: [N, msg_feature_len]
-    out = keras.layers.Lambda(lambda x: K.sum(x, axis=2,keepdims=False))(out)
-    # new_nodes: [N, node_feature_len]
-    new_nodes = Conv_block(out, node_feature_len, 'relu')
-    # out: [node_feature_len]
-    out = keras.layers.Lambda(lambda x: K.sum(x, axis=1, keepdims=False))(new_nodes)
-    # out: [graph_feature_len]
-    new_features = keras.layers.Dense(graph_feature_len, use_bias=True)(out)
-    new_features = keras.layers.Lambda(lambda x: x[0] + x[1])([new_features, features])
-    pred =  keras.layers.Dense(16, use_bias=True)(new_features)
 
-    model = keras.Model(inputs = [nodes, edges, features], outputs = [pred])
+    # aggregate information about each atom's relationship with all the other atoms
+    out = keras.layers.Lambda(lambda x: K.sum(x, axis=2, keepdims=False))(out) # shape (None, 32, 16)
+
+    # extract features about atoms through convolution
+    new_nodes = conv_block(out, node_feature_len, 'relu') # shape (None, 32, 16)
+
+    # aggregate information further
+    out = keras.layers.Lambda(lambda x: K.sum(x, axis=1, keepdims=False))(new_nodes) # shape (None, 16)
+
+    # fully connected layer
+    new_features = keras.layers.Dense(graph_feature_len, use_bias=True)(out) # shape (None, 16)
+
+    # below code is for features update -> can add features from previous parts of the model to these features.
+    # currently, features is just a bunch of 0s, so technically this does nothing right now,
+    # but this can be used in the future if we decide to expand the model.
+    # inevitably, we will also need a way to preserve the features from previous parts of the model to use,
+    # but that's for later.
+    new_features = keras.layers.Lambda(lambda x: x[0] + x[1])([new_features, features])
+
+    # output layer
+    # each of the 16 values in the output layer corresponds to one of the quantum properties we're predicting
+    pred = keras.layers.Dense(16, use_bias=True)(new_features)
+
+    model = keras.Model(inputs=[nodes, edges, features], outputs=[pred])
     return model
 ```
 
