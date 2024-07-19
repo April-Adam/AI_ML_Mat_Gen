@@ -185,10 +185,10 @@ history = model.fit(train_generator, epochs=100)
 # h5
 model.save('gnn_qm9.h5')
 # tflite
-converter = tf.lite.TFLiteConverter.from_keras_model(model)
-tflite_model = converter.convert()
-with open('gnn_qm9_model.tflite', 'wb') as f:
-  f.write(tflite_model)
+# converter = tf.lite.TFLiteConverter.from_keras_model(model)
+# tflite_model = converter.convert()
+# with open('gnn_qm9_model.tflite', 'wb') as f:
+#   f.write(tflite_model)
 
 # plot metrics
 fig_acc = plt.figure(figsize=(10, 10))
