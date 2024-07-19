@@ -201,7 +201,7 @@ plt.show()
 # fig_acc.savefig('gnn_qm9_mae.png', dpi=fig_acc.dpi)
 
 # nodes and edges of validation set
-nodes, edges = create_nodes_and_edges(test_set)
+nodes, edges = create_nodes_and_edges(valid_set)
 
 # get ground truth labels in validation set and normalize
 ys = [convert_record(d)[1] for d in valid_set]
