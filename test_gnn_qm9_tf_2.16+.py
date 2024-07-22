@@ -4,7 +4,6 @@ from fetch_data import qm9_parse, qm9_fetch
 from tensorflow import keras
 import matplotlib.pyplot as plt
 import sys
-from keras import backend as K
 from sklearn.utils import shuffle
 
 graph_feature_len = 8
