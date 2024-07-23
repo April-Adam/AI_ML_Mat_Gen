@@ -199,9 +199,9 @@ plt.legend(['train'], loc='upper left')
 plt.show()
 # fig_acc.savefig('gnn_qm9_mae.png', dpi=fig_acc.dpi)
 
+# 4. get validation data
 # nodes and edges of validation set
 nodes, edges = create_nodes_and_edges(valid_set)
-
 # get ground truth labels in validation set and normalize
 ys = [convert_record(d)[1] for d in valid_set]
 norm_ys = [transform_label(d) for d in ys]
