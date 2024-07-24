@@ -1,4 +1,3 @@
-import tensorflow as tf
 import numpy as np
 from fetch_data import qm9_parse, qm9_fetch
 from tensorflow import keras
