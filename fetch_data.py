@@ -53,15 +53,15 @@ def qm9_prepare_records(lines):
     # "A", "B", "C", ... are all converted to floats
     labels = [float(x) for x in lines[1].split("gdb")[1].split()]
 
-    # each entry from index 2 to index N+1 is of the form "X\tY\tZ\tW\tA", where "X" is one of the elements in `pt`,
-    # "Y", "Z", "W" are the x, y, z coordinates respectively of element "X", and "A" is another number associated with "X".
-    # thus, x.split()[0] will get the element "X"
-    # pt[X] then gets the atomic number of the element
+    # each entry from index 2 to index N+1 is of the form "E\tX\tY\tZ\tA", where "E" is one of the elements in `pt`,
+    # "X", "Y", "Z" are the x, y, z coordinates respectively of element "E", and "A" is another number associated with "E".
+    # thus, x.split()[0] will get the element "E"
+    # pt[E] then gets the atomic number of the element
     elements = [pt[x.split()[0]] for x in lines[2 : N + 2]]
 
     coords = np.empty((N, 4), dtype=np.float64)
     for i in range(N):
-        # x.split()[1:] gets the coordinates "Y", "Z", "W", and the last number "A"
+        # x.split()[1:] gets and parses the coordinates "X", "Y", "Z", and the last number "A"
         coords[i] = [_float(x) for x in lines[i + 2].split()[1:]]
     
     feature = {
