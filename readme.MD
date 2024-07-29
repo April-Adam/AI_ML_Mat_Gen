@@ -42,9 +42,7 @@ moment µ (Debye), and the norm of static polarizability α (Bohr3)."
 ![image info](./docs/Pred.png)
 
 ## Requirements
-This software currently only works on TensorFlow version 2.15.1 and lower. If you are using TensorFlow 2.16.0 and above, you can downgrade TensorFlow using `pip uninstall tensorflow` and `pip install tensorflow==<version>`, where `<version>` is any TensorFlow version below 2.16.0.
-
-Furthermore, only certain versions of Python can be used to install certain versions of TensorFlow. Visit [this link](https://www.tensorflow.org/install/source#tested_build_configurations) to see what versions of Python are required to use what versions of TensorFlow.
+To use the Graph Neural Network (see below), use the file `test_gnn_qm9.py` for TensorFlow versions before 2.16.0; for TensorFlow version 2.16.0 and above, use `test_gnn_qm9_tf_2.16+.py`. The Convolutional Neural Network (see below) is compatible with all versions of TensorFlow (as of July 29, 2024).
 
 ## Neural Network 
 ### 1. Convolution Neural Network 
