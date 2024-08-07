@@ -39,9 +39,14 @@ def qm9_data_parse(record):
     return (elements, coords), parsed_features["labels"]
 
 
-def qm9_prepare_records(lines):
+def qm9_parse_records(lines):
     # atomic numbers of associated elements
-    pt = {"C": 2, "H": 1, "O": 8, "N": 7, "F": 9}
+    pt = {"C": 6, "H": 1, "O": 8, "N": 7, "F": 9}
+
+    # structure of variable lines:
+    # index 0 - number of elements (N)
+    # index 1 - all 16 quantum properties concatenated in the form: "gbd A\tB\tC\t...", where "A", "B", "C", ... are the ground truth labels
+    # index 2 to N+1 - each element and their (x, y, z)
 
     # number of elements
     N = int(lines[0])
@@ -63,6 +68,123 @@ def qm9_prepare_records(lines):
     for i in range(N):
         # x.split()[1:] gets and parses the coordinates "X", "Y", "Z", and the last number "A"
         coords[i] = [_float(x) for x in lines[i + 2].split()[1:]]
+
+    return N, labels, elements, coords
+
+coords_lst = []
+num_atoms_lst = []
+elements_lst = []
+id_lst = []
+quantum_props = {
+    "A": [], # unit: GHz
+    "B": [], # unit: GHz
+    "C": [], # unit: GHz
+    "mu": [], # unit: Debye (D)
+    "alpha": [], # unit: Bohr^3
+    "homo": [], # unit: eV
+    "lumo": [], # unit: eV
+    "gap": [], # unit: eV
+    "r2": [], # unit: Bohr^2
+    "zpve": [], # unit: eV
+    "U0": [], # unit: Hartree
+    "U": [], # unit: Hartree
+    "H": [], # unit: Hartree
+    "G": [], # unit: Hartree
+    "Cv": [] # unit: cal/(mol K)
+}
+meta = {
+    "mean": {},
+    "std": {}
+}
+def qm9_store_lines(lines):
+    N, labels, elements, coords = qm9_parse_records(lines)
+
+    # append number of elements
+    num_atoms_lst.append(N)
+
+    # append coordinates
+    coords = np.asarray(coords)
+    coords = coords[:, :3]
+    coords = coords.tolist()
+    coords_lst.extend(coords)
+
+    # append elements
+    elements_lst.extend(elements)
+
+    # append indices
+    id_lst.append(labels[0])
+
+    # append quantum properties to respective lists
+    quantum_props["A"].append(labels[1])
+    quantum_props["B"].append(labels[2])
+    quantum_props["C"].append(labels[3])
+    quantum_props["mu"].append(labels[4])
+    quantum_props["alpha"].append(labels[5])
+    quantum_props["homo"].append(labels[6])
+    quantum_props["lumo"].append(labels[7])
+    quantum_props["gap"].append(labels[8])
+    quantum_props["r2"].append(labels[9])
+    quantum_props["zpve"].append(labels[10])
+    quantum_props["U0"].append(labels[11])
+    quantum_props["U"].append(labels[12])
+    quantum_props["H"].append(labels[13])
+    quantum_props["G"].append(labels[14])
+    quantum_props["Cv"].append(labels[15])
+
+def qm9_save_properties_as_numpy():
+    np_arr_quantum_props = {}
+    for key in quantum_props.keys():
+        # compute mean and std of quantum properties
+        meta["mean"][key] = np.mean(quantum_props[key])
+        meta["std"][key] = np.std(quantum_props[key])
+
+        # convert to array
+        np_arr_quantum_props[key] = np.asarray(quantum_props[key])
+
+    # recursively do np.array on the coordinates in coords_lst
+    converted_coords_lst = np.array([np.array(c) for c in coords_lst])
+
+    # The original dataset that this function replicates (qm9_eV.npz) converts the 
+    # quantum properties with unit Hartree to use eV and other units instead.
+    # Currently, the properties `homo`, `lumo`, `gap`, and `zpve` differ from the
+    # original QM9 dataset by a factor of around 27.211, which is the conversion
+    # factor from Hartree to eV (1 Hartree = 27.211 eV).
+    # There are other properties (`U0`, `U`, `H`, `G`) that also differ from the original values.
+    # I am at present unable to reverse engineer them, so they will stay as-is.
+    HARTREE_TO_EV_FACTOR = 27.211386245981
+    np_arr_quantum_props["homo"] *= HARTREE_TO_EV_FACTOR
+    np_arr_quantum_props["lumo"] *= HARTREE_TO_EV_FACTOR
+    np_arr_quantum_props["gap"] *= HARTREE_TO_EV_FACTOR
+    np_arr_quantum_props["zpve"] *= HARTREE_TO_EV_FACTOR
+
+    # save everything
+    save_to = "qm9_eV_2.npz"
+    np.savez(
+        save_to,
+        R = converted_coords_lst,
+        N = np.asarray(num_atoms_lst),
+        Z = np.asarray(elements_lst),
+        id = np.asarray(id_lst),
+        A = np_arr_quantum_props["A"],
+        B = np_arr_quantum_props["B"],
+        C = np_arr_quantum_props["C"],
+        mu = np_arr_quantum_props["mu"],
+        alpha = np_arr_quantum_props["alpha"],
+        homo = np_arr_quantum_props["homo"],
+        lumo = np_arr_quantum_props["lumo"],
+        gap = np_arr_quantum_props["gap"],
+        r2 = np_arr_quantum_props["r2"],
+        zpve = np_arr_quantum_props["zpve"],
+        U0 = np_arr_quantum_props["U0"],
+        U = np_arr_quantum_props["U"],
+        H = np_arr_quantum_props["H"],
+        G = np_arr_quantum_props["G"],
+        Cv = np_arr_quantum_props["Cv"],
+        meta = np.asarray(meta)
+    )
+
+def qm9_save_records_as_features(lines):
+    N, labels, elements, coords = qm9_parse_records(lines)
     
     feature = {
         "N": tf.train.Feature(int64_list=tf.train.Int64List(value=[N])),
@@ -107,11 +229,13 @@ def qm9_fetch():
             with tar.extractfile(f"dsgdb9nsd_{i:06d}.xyz") as f:
                 lines = [l.decode("UTF-8") for l in f.readlines()] # decode everything to UTF-8
                 try:
-                    writer.write(qm9_prepare_records(lines).SerializeToString()) # write the record to file
+                    qm9_store_lines(lines)
+                    writer.write(qm9_save_records_as_features(lines).SerializeToString()) # write the record to file
                 except ValueError as e:
                     print(i)
                     raise e
     print("")
+    qm9_save_properties_as_numpy()
     return record_file
 
 
